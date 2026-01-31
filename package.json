@@ -1,0 +1,14 @@
+{
+  "name": "bms",
+  "version": "1.0.0",
+  "description": "Building Management System",
+  "private": true,
+  "workspaces": [
+    "bms-backend",
+    "bms-frontend"
+  ],
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  }
+}
