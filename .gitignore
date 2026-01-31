@@ -3,7 +3,7 @@ node_modules/
 package-lock.json
 
 # Build outputs
-dist/
+# NOTE: dist/ is committed for Railway deployment
 build/
 *.tsbuildinfo
 
