@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for user roles
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+  TECHNICIAN
+}
+
+// Enum for reading status
+enum ReadingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Organization/Company
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  logo          String?
+  inviteCode    String   @unique @default(cuid()) // Code for staff to join org
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  users         User[]
+  buildings     Building[]
+  categories    Category[]
+  tasks         Task[]
+  readings      Reading[]
+  readingComments ReadingComment[]
+  notifications Notification[]
+
+  @@map("organizations")
+}
+
+// User/Staff
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String   // hashed password
+  firstName     String
+  lastName      String
+  role          UserRole
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  readings      Reading[]
+  readingComments ReadingComment[]
+  assignedTasks TaskAssignment[]
+  notifications Notification[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+// Building
+model Building {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  location      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  categories    Category[]
+  tasks         Task[]
+  readings      Reading[]
+
+  @@index([organizationId])
+  @@map("buildings")
+}
+
+// Category (Chillers, Lifts, AC, Network, etc.)
+model Category {
+  id            String   @id @default(cuid())
+  name          String   // e.g., "Chillers", "Lifts", "AC", "Network"
+  description   String?
+  unit          String?  // e.g., "°C", "V", "A", "L"
+  minValue      Float?   // Minimum acceptable value
+  maxValue      Float?   // Maximum acceptable value
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  buildingId    String
+  building      Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  
+  tasks         Task[]
+  readings      Reading[]
+
+  @@unique([organizationId, buildingId, name])
+  @@index([organizationId])
+  @@index([buildingId])
+  @@map("categories")
+}
+
+// Task (scheduled readings)
+model Task {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  frequency     String   // e.g., "DAILY", "WEEKLY", "MONTHLY"
+  scheduledTime String   // e.g., "09:00", "14:00" (HH:mm format)
+  dueDate       DateTime? // For one-time tasks
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  buildingId    String
+  building      Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  assignments   TaskAssignment[]
+  readings      Reading[]
+  notifications Notification[]
+
+  @@index([organizationId])
+  @@index([buildingId])
+  @@index([categoryId])
+  @@map("tasks")
+}
+
+// Task Assignment (which technician is assigned to which task)
+model TaskAssignment {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  taskId        String
+  task          Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_assignments")
+}
+
+// Reading (submitted data)
+model Reading {
+  id            String   @id @default(cuid())
+  value         Float
+  notes         String?
+  status        ReadingStatus @default(PENDING)
+  submittedAt   DateTime @default(now())
+  approvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  buildingId    String
+  building      Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  taskId        String
+  task          Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  submittedById String
+  submittedBy   User @relation(fields: [submittedById], references: [id])
+  
+  comments      ReadingComment[]
+  notifications Notification[]
+
+  @@index([organizationId])
+  @@index([buildingId])
+  @@index([categoryId])
+  @@index([taskId])
+  @@index([submittedById])
+  @@index([status])
+  @@map("readings")
+}
+
+// Reading Comments
+model ReadingComment {
+  id            String   @id @default(cuid())
+  comment       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  readingId     String
+  reading       Reading @relation(fields: [readingId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([readingId])
+  @@index([userId])
+  @@map("reading_comments")
+}
+
+// Notifications
+model Notification {
+  id            String   @id @default(cuid())
+  type          String   // READING_APPROVED, READING_REJECTED, TASK_COMMENTED, TASK_ASSIGNED
+  title         String
+  message       String
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  taskId        String?
+  task          Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  
+  readingId     String?
+  reading       Reading? @relation(fields: [readingId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}

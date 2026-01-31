@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-package-lock.json
+# NOTE: package-lock.json IS committed for production builds
 
 # Build outputs
 # NOTE: dist/ is committed for Railway deployment
