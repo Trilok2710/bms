@@ -1,1 +1,1 @@
-web: cd bms-backend && npm run prisma:generate && npm start
+web: cd bms-backend && npm install && npm run prisma:generate && npm start
