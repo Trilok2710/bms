@@ -47,5 +47,12 @@
     "prisma": "^5.0.0",
     "tsx": "^3.12.7",
     "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": "24.x",
+    "npm": "10.x"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

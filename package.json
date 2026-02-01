@@ -4,8 +4,8 @@
   "description": "Building Management System",
   "private": true,
   "engines": {
-    "node": "18.x",
-    "npm": "9.x"
+    "node": "24.x",
+    "npm": "10.x"
   },
   "scripts": {
     "start": "cd bms-backend && npm install && npm run prisma:generate && npm start",
