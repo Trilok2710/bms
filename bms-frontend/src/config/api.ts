@@ -9,13 +9,16 @@ export const apiProxy = {
   },
 };
 
-// Use production backend URL directly
-const isDev = typeof import.meta !== 'undefined' && import.meta.env.DEV;
-const backendUrl = isDev 
-  ? 'http://localhost:5000'
-  : 'https://bms-production-e556.up.railway.app';
+// Production backend URL - hardcoded for Vercel deployment
+const PRODUCTION_API_URL = 'https://bms-production-e556.up.railway.app';
 
-export const apiBaseUrl = (import.meta.env.VITE_API_URL as string) || `${backendUrl}/api`;
+// Determine if running in development
+const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+// Build API base URL
+export const apiBaseUrl = isDevelopment
+  ? 'http://localhost:5000/api'
+  : `${PRODUCTION_API_URL}/api`;
 
 export default {
   apiBaseUrl,
