@@ -1,13 +1,29 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || '/api';
+// Determine API base URL based on environment
+const getApiBaseUrl = (): string => {
+  // Check if environment variable is set (from Vercel)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL as string;
+  }
+  
+  // Runtime detection: check if running on localhost or production
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:5000';
+  }
+  
+  // Production fallback - hardcoded backend URL
+  return 'https://bms-production-e556.up.railway.app';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   private api: AxiosInstance;
 
   constructor() {
     this.api = axios.create({
-      baseURL: API_BASE_URL,
+      baseURL: `${API_BASE_URL}/api`,
       headers: {
         'Content-Type': 'application/json',
       },
