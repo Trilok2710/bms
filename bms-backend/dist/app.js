@@ -33,16 +33,24 @@ app.use((0, helmet_1.default)({
     noSniff: true,
     xssFilter: true,
 }));
-// CORS
+// CORS - Allow frontend origins (Vercel deployments, localhost, and configured FRONTEND_URL)
 const allowedOrigins = [
     env_1.env.FRONTEND_URL,
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
+    'https://bms-six-blush.vercel.app',
+    'https://bms-yk6c.vercel.app', // Alternative Vercel frontend
 ];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow requests with no origin (like mobile apps or Postman)
+        if (!origin) {
+            callback(null, true);
+            return;
+        }
+        // Check if origin is allowed
+        if (allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
             callback(null, true);
         }
         else {
