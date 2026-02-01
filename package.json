@@ -8,7 +8,7 @@
     "npm": "9.x"
   },
   "scripts": {
-    "start": "cd bms-backend && npm start",
-    "build": "cd bms-backend && npm run build"
+    "start": "cd bms-backend && npm install && npm run prisma:generate && npm start",
+    "build": "cd bms-backend && npm install && npm run build"
   }
 }
