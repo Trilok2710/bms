@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/common/Button';
-import { Building2 } from 'lucide-react';
+import { Building2, Eye, EyeOff, Check, X } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, error: authError } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -25,11 +27,28 @@ export const RegisterPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Password requirements validation
+  const passwordRequirements = {
+    minLength: formData.password.length >= 8,
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+  };
+
+  const isPasswordValid = Object.values(passwordRequirements).every(req => req);
+  const passwordsMatch = formData.password === formData.confirmPassword && formData.password.length > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
+    if (!isPasswordValid) {
+      setError('Password does not meet all requirements');
+      return;
+    }
+
+    if (!passwordsMatch) {
       setError('Passwords do not match');
       return;
     }
@@ -53,6 +72,17 @@ export const RegisterPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const RequirementItem = ({ met, text }: { met: boolean; text: string }) => (
+    <div className="flex items-center gap-2 text-sm">
+      {met ? (
+        <Check size={16} className="text-green-600" />
+      ) : (
+        <X size={16} className="text-gray-300" />
+      )}
+      <span className={met ? 'text-green-700' : 'text-gray-600'}>{text}</span>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4">
@@ -161,26 +191,77 @@ export const RegisterPage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              required
-            />
+            <div className="relative mb-2">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none pr-10"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            {/* Password Requirements */}
+            {formData.password && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold text-gray-700 mb-2">Password Requirements:</p>
+                <RequirementItem met={passwordRequirements.minLength} text="At least 8 characters" />
+                <RequirementItem met={passwordRequirements.hasUpperCase} text="One uppercase letter (A-Z)" />
+                <RequirementItem met={passwordRequirements.hasLowerCase} text="One lowercase letter (a-z)" />
+                <RequirementItem met={passwordRequirements.hasNumber} text="One number (0-9)" />
+                <RequirementItem met={passwordRequirements.hasSpecialChar} text="One special character (!@#$%^&*)" />
+              </div>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none pr-10 ${
+                  formData.confirmPassword
+                    ? passwordsMatch
+                      ? 'border-green-300'
+                      : 'border-red-300'
+                    : 'border-gray-300'
+                }`}
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+              {formData.confirmPassword && (
+                <div className="mt-2">
+                  {passwordsMatch ? (
+                    <div className="flex items-center gap-2 text-green-700 text-sm">
+                      <Check size={16} /> Passwords match
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-red-700 text-sm">
+                      <X size={16} /> Passwords do not match
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <Button
@@ -189,6 +270,7 @@ export const RegisterPage: React.FC = () => {
             size="lg"
             className="w-full"
             loading={loading}
+            disabled={!isPasswordValid || !passwordsMatch}
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </Button>
