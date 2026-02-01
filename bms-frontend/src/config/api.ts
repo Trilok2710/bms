@@ -9,7 +9,13 @@ export const apiProxy = {
   },
 };
 
-export const apiBaseUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+// Use production backend URL directly
+const isDev = typeof import.meta !== 'undefined' && import.meta.env.DEV;
+const backendUrl = isDev 
+  ? 'http://localhost:5000'
+  : 'https://bms-production-e556.up.railway.app';
+
+export const apiBaseUrl = (import.meta.env.VITE_API_URL as string) || `${backendUrl}/api`;
 
 export default {
   apiBaseUrl,
